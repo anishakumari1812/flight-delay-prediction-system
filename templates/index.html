@@ -1,0 +1,523 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Flight Delay Predictor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .content {
+      padding: 30px;
+    }
+    
+    .form-section {
+      margin-bottom: 30px;
+    }
+    
+    .form-section h2 {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #667eea;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    label {
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    input[type="number"],
+    input[type="time"],
+    input[type="date"],
+    select {
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn-container {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .result {
+      margin-top: 30px;
+      padding: 24px;
+      border-radius: 8px;
+      display: none;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .result.success {
+      background: #d4edda;
+      border: 2px solid #28a745;
+    }
+    
+    .result.warning {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+    }
+    
+    .result.error {
+      background: #f8d7da;
+      border: 2px solid #dc3545;
+    }
+    
+    .result h3 {
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    
+    .prediction-details {
+      font-size: 16px;
+      line-height: 1.8;
+    }
+    
+    .probability-bar {
+      margin-top: 15px;
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .probability-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745 0%, #ffc107 50%, #dc3545 100%);
+      transition: width 0.5s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    
+    .probability-fill.low {
+      background: linear-gradient(90deg, #28a745 0%, #5cb85c 100%);
+    }
+    
+    .probability-fill.medium {
+      background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+    }
+    
+    .probability-fill.high {
+      background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .csv-upload {
+      margin-top: 30px;
+      padding: 24px;
+      background: #f9f9f9;
+      border-radius: 8px;
+      border: 2px dashed #ddd;
+    }
+    
+    .csv-upload h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+    
+    input[type="file"] {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+    
+    .info-box {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #1976d2;
+      border-left: 4px solid #2196f3;
+    }
+    
+    .probability-info {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✈️ Flight Delay Predictor</h1>
+      <p>Predict if your flight will be delayed by 60+ minutes</p>
+    </div>
+    
+    <div class="content">
+      <form id="flightForm">
+        <div class="form-section">
+          <h2>Flight Details</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="airline">Airline</label>
+              <select id="airline" required>
+                <option value="">Select Airline</option>
+                <option value="American Airlines Inc.">American Airlines</option>
+                <option value="Delta Air Lines Inc.">Delta Air Lines</option>
+                <option value="United Air Lines Inc.">United Airlines</option>
+                <option value="Southwest Airlines Co.">Southwest Airlines</option>
+                <option value="JetBlue Airways">JetBlue Airways</option>
+                <option value="Alaska Airlines Inc.">Alaska Airlines</option>
+                <option value="Spirit Air Lines">Spirit Airlines</option>
+                <option value="Frontier Airlines Inc.">Frontier Airlines</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="destination">Destination Airport</label>
+              <select id="destination" required>
+                <option value="">Select Destination</option>
+                <option value="ATL">Atlanta (ATL)</option>
+                <option value="LAX">Los Angeles (LAX)</option>
+                <option value="ORD">Chicago (ORD)</option>
+                <option value="DFW">Dallas (DFW)</option>
+                <option value="DEN">Denver (DEN)</option>
+                <option value="JFK">New York JFK (JFK)</option>
+                <option value="SFO">San Francisco (SFO)</option>
+                <option value="LAS">Las Vegas (LAS)</option>
+                <option value="PHX">Phoenix (PHX)</option>
+                <option value="IAH">Houston (IAH)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-section">
+          <h2>Date & Time</h2>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="flightDate">Flight Date</label>
+              <input type="date" id="flightDate" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="departureTime">Departure Time</label>
+              <input type="time" id="departureTime" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="dayOfWeek">Day of Week</label>
+              <select id="dayOfWeek" required>
+                <option value="">Select Day</option>
+                <option value="1">Monday</option>
+                <option value="2">Tuesday</option>
+                <option value="3">Wednesday</option>
+                <option value="4">Thursday</option>
+                <option value="5">Friday</option>
+                <option value="6">Saturday</option>
+                <option value="7">Sunday</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="btn-container">
+          <button type="submit" class="btn-primary">🔍 Predict Delay</button>
+          <button type="button" class="btn-secondary" onclick="resetForm()">🔄 Reset</button>
+        </div>
+      </form>
+      
+      <div id="output" class="result"></div>
+      
+      <div class="info-box">
+        <strong>ℹ️ Note:</strong> This predictor uses historical flight data to estimate delay probability. 
+        Actual delays may vary due to weather, operational issues, and other factors.
+      </div>
+      
+      <!-- <div class="csv-upload">
+        <h3>📊 Batch Prediction</h3>
+        <p style="margin-bottom: 15px; color: #666;">Upload a CSV file to predict delays for multiple flights</p>
+        <input id="fileInput" type="file" accept=".csv">
+        <button class="btn-primary" onclick="predictCsv()" style="width: 100%;">Upload & Predict</button>
+      </div> -->
+    </div>
+  </div>
+
+<script>
+document.getElementById('flightForm').onsubmit = async function(e) {
+  e.preventDefault();
+  
+  // Get form values
+  const airline = document.getElementById('airline').value;
+  const destination = document.getElementById('destination').value;
+  const flightDate = document.getElementById('flightDate').value;
+  const departureTime = document.getElementById('departureTime').value;
+  const dayOfWeek = parseInt(document.getElementById('dayOfWeek').value);
+  
+  // Parse date
+  const date = new Date(flightDate);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  
+  // Parse time to military format (e.g., "14:30" -> 1430)
+  const timeParts = departureTime.split(':');
+  const depTime = parseInt(timeParts[0]) * 100 + parseInt(timeParts[1]);
+  
+  // Build the JSON row with airline and destination as one-hot encoded features
+  const row = {
+    DayOfWeek: dayOfWeek,
+    DepTime: depTime,
+    month: month,
+    day: day
+  };
+  
+  // Add airline feature (one-hot encoding)
+  row[`Airline_${airline}`] = true;
+  
+  // Add destination feature (one-hot encoding)
+  row[`Dest_${destination}`] = true;
+  
+  // Send prediction request
+  try {
+    const resp = await fetch('/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row: row })
+    });
+    
+    const data = await resp.json();
+    const output = document.getElementById('output');
+    
+    if (resp.ok) {
+      // data.probability is the probability of DELAY (class 1)
+      const delayProbability = (data.probability * 100).toFixed(1);
+      const ontimeProbability = ((1 - data.probability) * 100).toFixed(1);
+      
+      // Determine status based on delay probability
+      let status, statusClass, icon, message, barClass;
+      
+      if (data.probability >= 0.5) {
+        status = 'Delay Likely';
+        statusClass = 'error';
+        icon = '⚠️';
+        message = 'Flight likely delayed 60+ minutes';
+        barClass = 'high';
+      } else if (data.probability >= 0.3) {
+        status = 'Possible Delay';
+        statusClass = 'warning';
+        icon = '⚡';
+        message = 'Flight may experience delays';
+        barClass = 'medium';
+      } else {
+        status = 'On-Time Expected';
+        statusClass = 'success';
+        icon = '✅';
+        message = 'Flight expected to arrive on-time';
+        barClass = 'low';
+      }
+      
+      output.className = 'result ' + statusClass;
+      output.style.display = 'block';
+      
+      output.innerHTML = `
+        <h3>${icon} ${status}</h3>
+        <div class="prediction-details">
+          <p><strong>Prediction:</strong> ${message}</p>
+          <p><strong>Delay Probability:</strong> ${delayProbability}%</p>
+          <p><strong>On-Time Probability:</strong> ${ontimeProbability}%</p>
+          <div class="probability-bar">
+            <div class="probability-fill ${barClass}" style="width: ${delayProbability}%">
+              ${delayProbability}% Delay Risk
+            </div>
+          </div>
+          <div class="probability-info">
+            ${data.probability < 0.3 ? '✓ Low risk of significant delay' : 
+              data.probability < 0.5 ? '⚡ Moderate risk - monitor flight status' : 
+              '⚠️ High risk - consider backup plans'}
+          </div>
+        </div>
+      `;
+    } else {
+      output.className = 'result error';
+      output.style.display = 'block';
+      output.innerHTML = `<h3>❌ Error</h3><p>${JSON.stringify(data)}</p>`;
+    }
+  } catch (error) {
+    const output = document.getElementById('output');
+    output.className = 'result error';
+    output.style.display = 'block';
+    output.innerHTML = `<h3>❌ Error</h3><p>Failed to connect to prediction service: ${error.message}</p>`;
+  }
+};
+
+function resetForm() {
+  document.getElementById('flightForm').reset();
+  document.getElementById('output').style.display = 'none';
+}
+
+async function predictCsv() {
+  const fi = document.getElementById('fileInput');
+  if (!fi.files || !fi.files[0]) {
+    alert('Please choose a CSV file first');
+    return;
+  }
+  
+  const form = new FormData();
+  form.append('file', fi.files[0]);
+  
+  try {
+    const resp = await fetch('/predict', { method: 'POST', body: form });
+    const data = await resp.json();
+    const output = document.getElementById('output');
+    
+    if (resp.ok) {
+      const results = data.results.map((r, i) => {
+        // r.probability is the delay probability
+        const delayProb = (r.probability * 100).toFixed(1);
+        
+        let bgColor, icon, label;
+        if (r.probability >= 0.5) {
+          bgColor = '#f8d7da';
+          icon = '⚠️';
+          label = 'High Delay Risk';
+        } else if (r.probability >= 0.3) {
+          bgColor = '#fff3cd';
+          icon = '⚡';
+          label = 'Moderate Risk';
+        } else {
+          bgColor = '#d4edda';
+          icon = '✅';
+          label = 'Low Risk';
+        }
+        
+        return `<div style="padding: 12px; margin: 8px 0; background: ${bgColor}; border-radius: 4px; border-left: 4px solid ${r.probability >= 0.5 ? '#dc3545' : r.probability >= 0.3 ? '#ffc107' : '#28a745'};">
+          <strong>Row ${i + 1}:</strong> ${icon} ${label} 
+          <span style="float: right; font-weight: bold;">${delayProb}% delay probability</span>
+        </div>`;
+      }).join('');
+      
+      output.className = 'result success';
+      output.style.display = 'block';
+      output.innerHTML = `<h3>📊 Batch Prediction Results</h3>${results}`;
+    } else {
+      output.className = 'result error';
+      output.style.display = 'block';
+      output.innerHTML = `<h3>❌ Error</h3><p>${JSON.stringify(data)}</p>`;
+    }
+  } catch (error) {
+    const output = document.getElementById('output');
+    output.className = 'result error';
+    output.style.display = 'block';
+    output.innerHTML = `<h3>❌ Error</h3><p>Failed to process CSV: ${error.message}</p>`;
+  }
+}
+
+// Auto-populate day of week when date is selected
+document.getElementById('flightDate').addEventListener('change', function() {
+  const date = new Date(this.value);
+  const dayOfWeek = date.getDay() === 0 ? 7 : date.getDay(); // Convert Sunday from 0 to 7
+  document.getElementById('dayOfWeek').value = dayOfWeek;
+});
+</script>
+</body>
+</html>
